@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  
+  jpa:
+    hibernate:
+      # No prod, o Flyway é quem cria as tabelas, o Hibernate só valida a estrutura
+      ddl-auto: validate 
+    show-sql: false
+  
+  flyway:
+    enabled: true
+    url: ${DB_URL}
+    user: ${DB_USER}
+    password: ${DB_PASSWORD}
+    baseline-on-migrate: true
+
+server:
+  # O Render sobrepõe a porta automaticamente, mas deixamos 8080 como fallback
+  port: ${PORT:8080}
