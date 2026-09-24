@@ -1,4 +1,4 @@
-﻿package com.pokeprint.api.dto.request;
+package com.pokeprint.api.dto.request;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
