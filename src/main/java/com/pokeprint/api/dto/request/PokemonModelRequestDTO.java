@@ -1,9 +1,9 @@
-package com.pokeprint.api.dto.request;
+﻿package com.pokeprint.api.dto.request;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import java.math.BigDecimal;
 
 public record PokemonModelRequestDTO(
@@ -13,7 +13,7 @@ public record PokemonModelRequestDTO(
     @NotBlank String primaryType,
     String secondaryType,
     @NotBlank String scale,
-    @NotNull @Positive Integer basePrintTimeMinutes,
-    @NotNull @Positive BigDecimal defaultFilamentGrams,
+    @NotNull @PositiveOrZero Integer basePrintTimeMinutes,
+    @NotNull @PositiveOrZero BigDecimal defaultFilamentGrams,
     String imageUrl
 ) {}
