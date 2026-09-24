@@ -1,12 +1,14 @@
-package com.pokeprint.api.controller;
+﻿package com.pokeprint.api.controller;
 
 import com.pokeprint.api.domain.entity.FilamentInventory;
 import com.pokeprint.api.dto.request.FilamentRestockRequestDTO;
+import com.pokeprint.api.repository.FilamentInventoryRepository;
 import com.pokeprint.api.service.FilamentInventoryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/admin/filaments")
@@ -14,6 +16,12 @@ import org.springframework.web.bind.annotation.*;
 public class FilamentInventoryController {
 
     private final FilamentInventoryService filamentService;
+    private final FilamentInventoryRepository repository;
+
+    @GetMapping
+    public ResponseEntity<List<FilamentInventory>> getAll() {
+        return ResponseEntity.ok(repository.findAll());
+    }
 
     @PostMapping("/{id}/restock")
     public ResponseEntity<FilamentInventory> restock(

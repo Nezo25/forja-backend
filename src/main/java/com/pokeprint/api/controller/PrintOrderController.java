@@ -1,4 +1,4 @@
-package com.pokeprint.api.controller;
+﻿package com.pokeprint.api.controller;
 
 import com.pokeprint.api.domain.entity.PrintOrder;
 import com.pokeprint.api.dto.request.CreateOrderRequestDTO;
@@ -17,6 +17,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/orders")
@@ -26,6 +27,14 @@ public class PrintOrderController {
     private final OrderService orderService;
     private final OrderStatusTransitionService statusTransitionService;
     private final PrintOrderRepository printOrderRepository;
+
+    @GetMapping
+    public ResponseEntity<List<OrderResponseDTO>> getAllOrders() {
+        List<OrderResponseDTO> orders = printOrderRepository.findAll().stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(orders);
+    }
 
     @PostMapping
     public ResponseEntity<OrderResponseDTO> createOrder(@Valid @RequestBody CreateOrderRequestDTO request) {
