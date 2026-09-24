@@ -1,4 +1,4 @@
-package com.pokeprint.api.controller;
+﻿package com.pokeprint.api.controller;
 
 import com.pokeprint.api.domain.entity.PokemonModel;
 import com.pokeprint.api.dto.request.PokemonModelRequestDTO;
@@ -29,9 +29,7 @@ public class PokemonModelController {
             Pageable pageable) {
         
         Page<PokemonModel> page = pokemonModelRepository.findActiveWithFilters(generation, type, pageable);
-        
-        Page<PokemonModelResponseDTO> dtoPage = page.map(this::toResponseDTO);
-        return ResponseEntity.ok(dtoPage);
+        return ResponseEntity.ok(page.map(this::toResponseDTO));
     }
 
     @GetMapping("/{id}")
@@ -64,6 +62,30 @@ public class PokemonModelController {
                 .toUri();
                 
         return ResponseEntity.created(location).body(toResponseDTO(saved));
+    }
+    
+    @PutMapping("/{id}")
+    public ResponseEntity<PokemonModelResponseDTO> updateModel(@PathVariable Long id, @Valid @RequestBody PokemonModelRequestDTO request) {
+        return pokemonModelRepository.findById(id).map(model -> {
+            model.setPokedexNumber(request.pokedexNumber());
+            model.setName(request.name());
+            model.setGeneration(request.generation());
+            model.setPrimaryType(request.primaryType());
+            model.setSecondaryType(request.secondaryType());
+            model.setScale(request.scale());
+            model.setBasePrintTimeMinutes(request.basePrintTimeMinutes());
+            model.setDefaultFilamentGrams(request.defaultFilamentGrams());
+            model.setImageUrl(request.imageUrl());
+            PokemonModel saved = pokemonModelRepository.save(model);
+            return ResponseEntity.ok(toResponseDTO(saved));
+        }).orElse(ResponseEntity.notFound().build());
+    }
+    
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteModel(@PathVariable Long id) {
+        if (!pokemonModelRepository.existsById(id)) return ResponseEntity.notFound().build();
+        pokemonModelRepository.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 
     private PokemonModelResponseDTO toResponseDTO(PokemonModel model) {
