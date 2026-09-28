@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
@@ -14,7 +14,7 @@
     <artifactId>pokeprint-api</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>PokePrint 3D API</name>
-    <description>REST API para e-commerce e gestão de impressões 3D temáticas de Pokémon</description>
+    <description>REST API para e-commerce e gestÃ£o de impressÃµes 3D temÃ¡ticas de PokÃ©mon</description>
 
     <properties>
         <java.version>21</java.version>
@@ -98,7 +98,7 @@
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
-    </dependencies>
+    <dependency><groupId>com.bucket4j</groupId><artifactId>bucket4j-core</artifactId><version>8.9.0</version></dependency></dependencies>
 
     <build>
         <plugins>
@@ -117,3 +117,4 @@
         </plugins>
     </build>
 </project>
+
