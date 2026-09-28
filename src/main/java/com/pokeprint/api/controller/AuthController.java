@@ -1,5 +1,6 @@
 package com.pokeprint.api.controller;
 
+import com.pokeprint.api.dto.request.AdminLoginRequestDTO;
 import com.pokeprint.api.dto.request.CheckoutAuthRequestDTO;
 import com.pokeprint.api.dto.response.AuthResponseDTO;
 import com.pokeprint.api.service.AuthenticationService;
@@ -18,6 +19,12 @@ public class AuthController {
     @PostMapping("/checkout-login")
     public ResponseEntity<AuthResponseDTO> checkoutLogin(@Valid @RequestBody CheckoutAuthRequestDTO request) {
         AuthResponseDTO response = authenticationService.processCheckoutAuthentication(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<AuthResponseDTO> adminLogin(@Valid @RequestBody AdminLoginRequestDTO request) {
+        AuthResponseDTO response = authenticationService.adminLogin(request.email(), request.password());
         return ResponseEntity.ok(response);
     }
 }
