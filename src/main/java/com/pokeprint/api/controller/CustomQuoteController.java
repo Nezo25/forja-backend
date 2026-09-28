@@ -6,7 +6,7 @@ import com.pokeprint.api.dto.request.CustomQuoteAnalysisDTO;
 import com.pokeprint.api.dto.request.CustomQuoteConvertDTO;
 import com.pokeprint.api.dto.request.CustomQuoteSubmitDTO;
 import com.pokeprint.api.service.CustomQuoteService;
-import com.pokeprint.api.repository.CustomQuoteRepository;
+import com.pokeprint.api.repository.CustomQuoteRequestRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +22,7 @@ import java.util.List;
 public class CustomQuoteController {
 
     private final CustomQuoteService quoteService;
-    private final CustomQuoteRepository quoteRepository;
+    private final CustomQuoteRequestRepository quoteRepository;
 
     @GetMapping
     public ResponseEntity<List<CustomQuoteRequest>> getAllQuotes() {
