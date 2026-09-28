@@ -26,13 +26,11 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     }
 
     private Bucket newBucket(String ip) {
-        // Limit: 50 requests per minute per IP for standard routes
         Bandwidth limit = Bandwidth.classic(50, Refill.greedy(50, Duration.ofMinutes(1)));
         return Bucket.builder().addLimit(limit).build();
     }
-    
+
     private Bucket resolveAuthBucket(String ip) {
-        // Strict Limit: 5 requests per minute for login/auth routes
         return cache.computeIfAbsent(ip + "_auth", k -> {
             Bandwidth limit = Bandwidth.classic(5, Refill.greedy(5, Duration.ofMinutes(1)));
             return Bucket.builder().addLimit(limit).build();
@@ -43,7 +41,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String ip = request.getRemoteAddr();
         String path = request.getRequestURI();
-        
+
         Bucket bucket;
         if (path.startsWith("/api/v1/auth/") || path.startsWith("/api/v1/payments/")) {
             bucket = resolveAuthBucket(ip);
@@ -55,7 +53,8 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
         } else {
             response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
-            response.getWriter().write("{"error": "Too many requests. Please try again later."}");
+            response.setContentType("application/json");
+            response.getWriter().write("{\"error\": \"Too many requests. Please try again later.\"}");
         }
     }
 }
