@@ -29,10 +29,14 @@ public class FilamentInventoryController {
     @PostMapping
     public ResponseEntity<FilamentInventory> createFilament(@Valid @RequestBody FilamentRequestDTO request) {
         FilamentInventory fil = new FilamentInventory();
-        fil.setColor(request.color());
-        fil.setMaterial(request.material());
+        fil.setColorName(request.color());
+        try {
+            fil.setMaterialType(com.pokeprint.api.domain.enums.MaterialType.valueOf(request.material().toUpperCase()));
+        } catch (IllegalArgumentException e) {
+            fil.setMaterialType(com.pokeprint.api.domain.enums.MaterialType.PLA);
+        }
         fil.setStockGrams(request.stockGrams());
-        fil.setMinStockGrams(request.minStockGrams());
+        fil.setCostPerGram(new java.math.BigDecimal("0.10")); // Default value
         FilamentInventory saved = repository.save(fil);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(saved.getId()).toUri();
         return ResponseEntity.created(location).body(saved);
