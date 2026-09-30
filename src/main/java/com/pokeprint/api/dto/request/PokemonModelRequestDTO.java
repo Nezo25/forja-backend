@@ -15,5 +15,6 @@ public record PokemonModelRequestDTO(
     @NotBlank String scale,
     @NotNull @PositiveOrZero Integer basePrintTimeMinutes,
     @NotNull @PositiveOrZero BigDecimal defaultFilamentGrams,
-    String imageUrl
+    String imageUrl,
+    @PositiveOrZero BigDecimal basePrice
 ) {}

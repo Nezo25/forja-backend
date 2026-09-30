@@ -14,6 +14,7 @@ public record PokemonModelResponseDTO(
     Integer basePrintTimeMinutes,
     BigDecimal defaultFilamentGrams,
     String imageUrl,
+    BigDecimal basePrice,
     Boolean isActive,
     LocalDateTime createdAt
 ) {}

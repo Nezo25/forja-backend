@@ -39,7 +39,10 @@ public class PokemonModel {
     @Column(name = "default_filament_grams", nullable = false, precision = 10, scale = 2)
     private BigDecimal defaultFilamentGrams;
 
-    @Column(name = "image_url")
+    @Column(name = "base_price", precision = 10, scale = 2)
+    private BigDecimal basePrice;
+
+    @Column(name = "image_url", columnDefinition = "LONGTEXT")
     private String imageUrl;
 
     @Column(name = "is_active", nullable = false)

@@ -52,6 +52,7 @@ public class PokemonModelController {
         model.setBasePrintTimeMinutes(request.basePrintTimeMinutes());
         model.setDefaultFilamentGrams(request.defaultFilamentGrams());
         model.setImageUrl(request.imageUrl());
+        model.setBasePrice(request.basePrice());
         model.setIsActive(true);
 
         PokemonModel saved = pokemonModelRepository.save(model);
@@ -76,6 +77,7 @@ public class PokemonModelController {
             model.setBasePrintTimeMinutes(request.basePrintTimeMinutes());
             model.setDefaultFilamentGrams(request.defaultFilamentGrams());
             model.setImageUrl(request.imageUrl());
+            model.setBasePrice(request.basePrice());
             PokemonModel saved = pokemonModelRepository.save(model);
             return ResponseEntity.ok(toResponseDTO(saved));
         }).orElse(ResponseEntity.notFound().build());
@@ -100,6 +102,7 @@ public class PokemonModelController {
                 model.getBasePrintTimeMinutes(),
                 model.getDefaultFilamentGrams(),
                 model.getImageUrl(),
+                model.getBasePrice(),
                 model.getIsActive(),
                 model.getCreatedAt()
         );
