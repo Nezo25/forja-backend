@@ -13,4 +13,6 @@ public interface FilamentInventoryRepository extends JpaRepository<FilamentInven
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT f FROM FilamentInventory f WHERE f.id = :id")
     Optional<FilamentInventory> findByIdForUpdate(Long id);
+
+    Optional<FilamentInventory> findTopByColorNameAndMaterialTypeOrderByCreatedAtDesc(String colorName, com.pokeprint.api.domain.enums.MaterialType materialType);
 }

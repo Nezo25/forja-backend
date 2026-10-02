@@ -9,5 +9,6 @@ public record FilamentRequestDTO(
     @NotBlank String color,
     @NotBlank String material,
     @NotNull @PositiveOrZero BigDecimal stockGrams,
-    @NotNull @PositiveOrZero BigDecimal minStockGrams
+    @NotNull @PositiveOrZero BigDecimal minStockGrams,
+    String hexCode
 ) {}

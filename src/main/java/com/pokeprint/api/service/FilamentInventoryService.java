@@ -2,8 +2,10 @@ package com.pokeprint.api.service;
 
 import com.pokeprint.api.domain.entity.CashFlowTransaction;
 import com.pokeprint.api.domain.entity.FilamentInventory;
+import com.pokeprint.api.domain.enums.MaterialType;
 import com.pokeprint.api.domain.enums.TransactionCategory;
 import com.pokeprint.api.domain.enums.TransactionType;
+import com.pokeprint.api.dto.request.FilamentRequestDTO;
 import com.pokeprint.api.dto.request.FilamentRestockRequestDTO;
 import com.pokeprint.api.infra.exception.ResourceNotFoundException;
 import com.pokeprint.api.repository.CashFlowTransactionRepository;
@@ -14,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 public class FilamentInventoryService {
@@ -24,6 +27,34 @@ public class FilamentInventoryService {
     public FilamentInventoryService(FilamentInventoryRepository filamentRepository, CashFlowTransactionRepository cashFlowRepository) {
         this.filamentRepository = filamentRepository;
         this.cashFlowRepository = cashFlowRepository;
+    }
+
+    @Transactional
+    public FilamentInventory createFilament(FilamentRequestDTO dto) {
+        MaterialType matType;
+        try {
+            matType = MaterialType.valueOf(dto.material().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            matType = MaterialType.PLA;
+        }
+
+        // Check for idempotency (same color and material created within last 10 seconds)
+        Optional<FilamentInventory> recent = filamentRepository.findTopByColorNameAndMaterialTypeOrderByCreatedAtDesc(dto.color(), matType);
+        if (recent.isPresent()) {
+            FilamentInventory existing = recent.get();
+            if (existing.getCreatedAt() != null && existing.getCreatedAt().isAfter(LocalDateTime.now().minusSeconds(10))) {
+                return existing;
+            }
+        }
+
+        FilamentInventory fil = new FilamentInventory();
+        fil.setColorName(dto.color());
+        fil.setMaterialType(matType);
+        fil.setStockGrams(dto.stockGrams());
+        fil.setHexCode(dto.hexCode());
+        fil.setCostPerGram(new BigDecimal("0.10")); // Default value
+
+        return filamentRepository.save(fil);
     }
 
     @Transactional
