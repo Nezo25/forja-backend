@@ -2,6 +2,7 @@ package com.pokeprint.api.infra.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -36,6 +37,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/v1/admin/**", "/actuator/**").hasRole("ADMIN")
                 .requestMatchers("/api/v1/auth/**", "/api/v1/public/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/models/**", "/api/v1/tcg-products/**").permitAll()
                 .anyRequest().authenticated()
             );
         return http.build();
