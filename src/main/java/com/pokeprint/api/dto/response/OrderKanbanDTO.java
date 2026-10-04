@@ -8,6 +8,8 @@ public record OrderKanbanDTO(
     Long id,
     String shortCode,
     String customerName,
+    String customerPhone,
+    String customerEmail,
     BigDecimal totalAmount,
     KanbanColumn kanbanColumn,
     List<String> tags

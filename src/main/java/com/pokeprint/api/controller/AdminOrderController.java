@@ -60,6 +60,8 @@ public class AdminOrderController {
                 order.getId(),
                 order.getShortCode(),
                 order.getCustomer().getName(),
+                order.getCustomer().getPhone(),
+                order.getCustomer().getEmail(),
                 order.getTotalAmount(),
                 order.getKanbanColumn(),
                 tagList
