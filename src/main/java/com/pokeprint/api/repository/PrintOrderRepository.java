@@ -11,4 +11,5 @@ import java.util.List;
 public interface PrintOrderRepository extends JpaRepository<PrintOrder, Long> {
     Page<PrintOrder> findByCustomerId(Long customerId, Pageable pageable);
     List<PrintOrder> findByStatus(OrderStatus status);
+    boolean existsByCustomerEmail(String email);
 }

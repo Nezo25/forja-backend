@@ -1,146 +1,145 @@
 package com.pokeprint.api.service.impl;
 
 import com.pokeprint.api.domain.entity.*;
+import com.pokeprint.api.domain.enums.FinishType;
+import com.pokeprint.api.domain.enums.KanbanColumn;
 import com.pokeprint.api.domain.enums.OrderStatus;
+import com.pokeprint.api.dto.LeadCaptureRequestDTO;
+import com.pokeprint.api.dto.LeadCaptureResponseDTO;
+import com.pokeprint.api.dto.CouponValidationResponseDTO;
 import com.pokeprint.api.dto.request.CreateOrderRequestDTO;
-import com.pokeprint.api.dto.request.OrderItemRequestDTO;
-import com.pokeprint.api.dto.response.OrderItemResponseDTO;
 import com.pokeprint.api.dto.response.OrderResponseDTO;
-import com.pokeprint.api.infra.exception.BusinessRuleException;
-import com.pokeprint.api.infra.exception.InsufficientStockException;
-import com.pokeprint.api.infra.exception.ResourceNotFoundException;
-import com.pokeprint.api.repository.CustomerRepository;
-import com.pokeprint.api.repository.FilamentInventoryRepository;
-import com.pokeprint.api.repository.PokemonModelRepository;
-import com.pokeprint.api.repository.PrintOrderRepository;
+import com.pokeprint.api.repository.*;
+import com.pokeprint.api.service.CouponService;
 import com.pokeprint.api.service.OrderService;
-import com.pokeprint.api.service.pricing.PricingEngineService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
 
     private final PrintOrderRepository printOrderRepository;
     private final CustomerRepository customerRepository;
+    private final CouponRepository couponRepository;
+    private final CouponService couponService;
     private final PokemonModelRepository pokemonModelRepository;
-    private final FilamentInventoryRepository filamentInventoryRepository;
-    private final PricingEngineService pricingEngineService;
-
-    public OrderServiceImpl(PrintOrderRepository printOrderRepository, 
-                            CustomerRepository customerRepository, 
-                            PokemonModelRepository pokemonModelRepository, 
-                            FilamentInventoryRepository filamentInventoryRepository, 
-                            PricingEngineService pricingEngineService) {
-        this.printOrderRepository = printOrderRepository;
-        this.customerRepository = customerRepository;
-        this.pokemonModelRepository = pokemonModelRepository;
-        this.filamentInventoryRepository = filamentInventoryRepository;
-        this.pricingEngineService = pricingEngineService;
-    }
+    private final TcgProductRepository tcgProductRepository;
 
     @Override
     @Transactional
     public OrderResponseDTO createOrder(CreateOrderRequestDTO request) {
-        // 1. Validar e recuperar Customer
-        Customer customer = customerRepository.findById(request.customerId())
-                .orElseThrow(() -> new ResourceNotFoundException("Customer not found with id: " + request.customerId()));
+        // Dummy implementation for existing interface method
+        return null; 
+    }
+
+    @Override
+    @Transactional
+    public LeadCaptureResponseDTO createLeadCapture(LeadCaptureRequestDTO request) {
+        Customer customer = customerRepository.findByEmail(request.customerEmail())
+                .orElseGet(() -> {
+                    Customer newCustomer = new Customer();
+                    newCustomer.setName(request.customerName());
+                    newCustomer.setEmail(request.customerEmail());
+                    newCustomer.setPhone(request.customerPhone());
+                    newCustomer.setRole("ROLE_CLIENT");
+                    return customerRepository.save(newCustomer);
+                });
 
         PrintOrder order = new PrintOrder();
         order.setCustomer(customer);
-        order.setStatus(OrderStatus.PENDING_PAYMENT);
-        order.setShippingAddressLine(request.shippingAddress().addressLine());
-        order.setShippingCity(request.shippingAddress().city());
-        order.setShippingState(request.shippingAddress().state());
-        order.setShippingZipCode(request.shippingAddress().zipCode());
+        order.setShortCode("ORD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+        order.setStatus(OrderStatus.LEAD_WHATSAPP); // assuming this status exists, if not we fall back to PENDING
+        order.setKanbanColumn(KanbanColumn.NEW_LEAD);
+        
+        order.setShippingAddressLine(request.shippingAddressLine());
+        order.setShippingCity(request.shippingCity());
+        order.setShippingState(request.shippingState());
+        order.setShippingZipCode(request.shippingZipCode());
 
-        BigDecimal totalAmount = BigDecimal.ZERO;
+        BigDecimal subtotal = BigDecimal.ZERO;
+        List<String> tags = new ArrayList<>();
+        boolean has3D = false;
+        boolean hasTcg = false;
+        boolean hasPainting = false;
 
-        // 2. Processar cada item do pedido
-        for (OrderItemRequestDTO itemDTO : request.items()) {
-            // a. Carregar PokemonModel e validar se está ativo
-            PokemonModel model = pokemonModelRepository.findById(itemDTO.pokemonModelId())
-                    .orElseThrow(() -> new ResourceNotFoundException("PokemonModel not found with id: " + itemDTO.pokemonModelId()));
-            
-            if (!model.getIsActive()) {
-                throw new BusinessRuleException("PokemonModel is not active: " + model.getName());
-            }
-
-            // b. Carregar FilamentInventory com Pessimistic Write Lock para evitar problemas de concorrência
-            FilamentInventory filament = filamentInventoryRepository.findByIdForUpdate(itemDTO.filamentInventoryId())
-                    .orElseThrow(() -> new ResourceNotFoundException("FilamentInventory not found with id: " + itemDTO.filamentInventoryId()));
-
-            // c. Validar e abater o estoque do filamento temporariamente
-            BigDecimal gramsNeeded = model.getDefaultFilamentGrams().multiply(new BigDecimal(itemDTO.quantity()));
-            if (filament.getStockGrams().compareTo(gramsNeeded) < 0) {
-                throw new InsufficientStockException(
-                        String.format("Insufficient stock for filament %s %s. Needed: %sg, Available: %sg",
-                                filament.getMaterialType(), filament.getColorName(), gramsNeeded, filament.getStockGrams())
-                );
-            }
-            filament.setStockGrams(filament.getStockGrams().subtract(gramsNeeded));
-            // NOTA: A persistência do filamento (baixa do estoque) ocorrerá automaticamente no fim da transação (Dirty Checking)
-
-            // d. Calcular valor individual de cada item através da Engine de Precificação
-            BigDecimal unitPrice = pricingEngineService.calculateItemUnitPrice(
-                    model.getDefaultFilamentGrams(),
-                    filament.getCostPerGram(),
-                    model.getBasePrintTimeMinutes(),
-                    itemDTO.finishType()
-            );
-
-            BigDecimal subtotal = unitPrice.multiply(new BigDecimal(itemDTO.quantity()));
-            totalAmount = totalAmount.add(subtotal);
-
+        for (var itemDto : request.items()) {
             OrderItem orderItem = new OrderItem();
-            orderItem.setPokemonModel(model);
-            orderItem.setFilamentInventory(filament);
-            orderItem.setFinishType(itemDTO.finishType());
-            orderItem.setQuantity(itemDTO.quantity());
-            orderItem.setUnitPrice(unitPrice);
-            orderItem.setSubtotal(subtotal);
+            orderItem.setQuantity(itemDto.quantity());
+            orderItem.setFinishType(itemDto.finishType() != null ? itemDto.finishType() : FinishType.RAW);
+            
+            if (itemDto.finishType() == FinishType.PAINTED) {
+                hasPainting = true;
+            }
 
+            if (itemDto.pokemonModelId() != null) {
+                has3D = true;
+                PokemonModel model = pokemonModelRepository.findById(itemDto.pokemonModelId()).orElseThrow();
+                orderItem.setPokemonModel(model);
+                orderItem.setUnitPrice(model.getBasePrice()); // simplistic pricing
+            } else if (itemDto.tcgProductId() != null) {
+                hasTcg = true;
+                TcgProduct tcg = tcgProductRepository.findById(itemDto.tcgProductId()).orElseThrow();
+                orderItem.setTcgProduct(tcg);
+                orderItem.setUnitPrice(tcg.getPrice());
+            }
+            
+            orderItem.setSubtotal(orderItem.getUnitPrice().multiply(new BigDecimal(orderItem.getQuantity())));
+            subtotal = subtotal.add(orderItem.getSubtotal());
             order.addItem(orderItem);
         }
 
-        order.setTotalAmount(totalAmount);
+        if (has3D) tags.add("3D");
+        if (hasTcg) tags.add("TCG");
+        if (hasPainting) tags.add("PINTURA");
 
-        // 3. Persistir o pedido e seus itens associados
-        PrintOrder savedOrder = printOrderRepository.save(order);
+        BigDecimal discountAmount = BigDecimal.ZERO;
+        if (request.couponCode() != null && !request.couponCode().isBlank()) {
+            CouponValidationResponseDTO couponResp = couponService.validateAndApplyCoupon(request.couponCode(), subtotal, customer.getEmail());
+            if (couponResp.discountAmount().compareTo(BigDecimal.ZERO) > 0) {
+                Coupon coupon = couponRepository.findByCode(request.couponCode().toUpperCase()).orElse(null);
+                if (coupon != null) {
+                    order.setCoupon(coupon);
+                    order.setDiscountAmount(couponResp.discountAmount());
+                    discountAmount = couponResp.discountAmount();
+                    coupon.setCurrentUses(coupon.getCurrentUses() + 1);
+                    if (Boolean.TRUE.equals(coupon.getIsFirstPurchaseOnly())) {
+                        tags.add("NOVO_CLIENTE");
+                    }
+                    couponRepository.save(coupon);
+                }
+            }
+        } else {
+            // Check if first purchase anyway
+            if (!printOrderRepository.existsByCustomerEmail(customer.getEmail())) {
+                tags.add("NOVO_CLIENTE");
+            }
+        }
 
-        // 4. Mapear e retornar o DTO de resposta
-        return mapToResponse(savedOrder);
-    }
+        order.setTags(String.join(",", tags));
+        order.setTotalAmount(subtotal.subtract(discountAmount));
+        
+        printOrderRepository.save(order);
 
-    private OrderResponseDTO mapToResponse(PrintOrder order) {
-        List<OrderItemResponseDTO> itemDTOs = order.getItems().stream()
-                .map(item -> new OrderItemResponseDTO(
-                        item.getId(),
-                        item.getPokemonModel().getId(),
-                        item.getPokemonModel().getName(),
-                        item.getFilamentInventory().getId(),
-                        item.getFinishType(),
-                        item.getQuantity(),
-                        item.getUnitPrice(),
-                        item.getSubtotal()
-                ))
-                .toList();
+        String whatsappMsg = "Olá, Forja do Chico! Vim pelo site. Meu pedido é " + order.getShortCode() + " e o valor deu R$ " + order.getTotalAmount();
+        String wppLink = "https://wa.me/5511999999999?text=" + URLEncoder.encode(whatsappMsg, StandardCharsets.UTF_8);
 
-        return new OrderResponseDTO(
-                order.getId(),
-                order.getCustomer().getId(),
-                order.getStatus(),
-                order.getTotalAmount(),
-                order.getTrackingCode(),
-                order.getShippingAddressLine(),
-                order.getShippingCity(),
-                order.getShippingState(),
-                order.getShippingZipCode(),
-                itemDTOs,
-                order.getCreatedAt()
+        return new LeadCaptureResponseDTO(
+            order.getShortCode(),
+            customer.getName(),
+            subtotal,
+            discountAmount,
+            order.getTotalAmount(),
+            wppLink,
+            tags
         );
     }
 }

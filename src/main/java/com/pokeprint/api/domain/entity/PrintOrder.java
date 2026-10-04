@@ -1,6 +1,7 @@
 package com.pokeprint.api.domain.entity;
 
 import com.pokeprint.api.domain.enums.OrderStatus;
+import com.pokeprint.api.domain.enums.KanbanColumn;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,6 +19,23 @@ public class PrintOrder {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "short_code", unique = true, length = 15)
+    private String shortCode;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "coupon_id")
+    private Coupon coupon;
+
+    @Column(name = "discount_amount", precision = 10, scale = 2)
+    private BigDecimal discountAmount = BigDecimal.ZERO;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "kanban_column", length = 50, nullable = false)
+    private KanbanColumn kanbanColumn = KanbanColumn.NEW_LEAD;
+
+    @Column(name = "tags")
+    private String tags;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "customer_id", nullable = false)

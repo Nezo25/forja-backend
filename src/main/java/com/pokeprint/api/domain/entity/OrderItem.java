@@ -26,8 +26,12 @@ public class OrderItem {
     @JoinColumn(name = "pokemon_model_id")
     private PokemonModel pokemonModel;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "filament_inventory_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tcg_product_id")
+    private TcgProduct tcgProduct;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "filament_inventory_id")
     private FilamentInventory filamentInventory;
 
     @Enumerated(EnumType.STRING)

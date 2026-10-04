@@ -5,6 +5,9 @@ import com.pokeprint.api.dto.request.CreateOrderRequestDTO;
 import com.pokeprint.api.dto.request.StatusUpdateRequestDTO;
 import com.pokeprint.api.dto.response.OrderItemResponseDTO;
 import com.pokeprint.api.dto.response.OrderResponseDTO;
+import com.pokeprint.api.dto.LeadCaptureRequestDTO;
+import com.pokeprint.api.dto.LeadCaptureResponseDTO;
+
 import com.pokeprint.api.infra.exception.ResourceNotFoundException;
 import com.pokeprint.api.repository.PrintOrderRepository;
 import com.pokeprint.api.service.OrderService;
@@ -34,6 +37,13 @@ public class PrintOrderController {
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(orders);
+    }
+
+    @PostMapping
+    
+    @PostMapping("/lead-capture")
+    public ResponseEntity<LeadCaptureResponseDTO> createLeadCapture(@Valid @RequestBody LeadCaptureRequestDTO request) {
+        return ResponseEntity.ok(orderService.createLeadCapture(request));
     }
 
     @PostMapping
