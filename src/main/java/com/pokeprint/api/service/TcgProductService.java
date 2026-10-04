@@ -76,4 +76,30 @@ public class TcgProductService {
         product.setIsActive(!product.getIsActive());
         repository.save(product);
     }
+    @Transactional
+    public TcgProductResponseDTO update(Long id, TcgProductRequestDTO dto) {
+        TcgProduct product = repository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Produto TCG não encontrado."));
+        
+        product.setName(dto.name());
+        product.setItemType(dto.itemType());
+        product.setExpansionName(dto.expansionName());
+        product.setLanguage(dto.language());
+        product.setPrice(dto.price());
+        product.setStockQuantity(dto.stockQuantity());
+        product.setImageUrl(dto.imageUrl());
+        if (dto.isActive() != null) {
+            product.setIsActive(dto.isActive());
+        }
+        
+        return TcgProductResponseDTO.fromEntity(repository.save(product));
+    }
+
+    @Transactional
+    public void delete(Long id) {
+        if (!repository.existsById(id)) {
+            throw new EntityNotFoundException("Produto TCG não encontrado.");
+        }
+        repository.deleteById(id);
+    }
 }

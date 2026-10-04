@@ -49,4 +49,14 @@ public class TcgProductController {
         service.toggleActiveStatus(id);
         return ResponseEntity.noContent().build();
     }
+    @PutMapping("/admin/tcg-products/{id}")
+    public ResponseEntity<TcgProductResponseDTO> updateProduct(@PathVariable Long id, @Valid @RequestBody TcgProductRequestDTO dto) {
+        return ResponseEntity.ok(service.update(id, dto));
+    }
+
+    @DeleteMapping("/admin/tcg-products/{id}")
+    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
+        service.delete(id);
+        return ResponseEntity.noContent().build();
+    }
 }
