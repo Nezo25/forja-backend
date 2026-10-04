@@ -21,6 +21,17 @@ public class AdminOrderController {
 
     private final PrintOrderRepository printOrderRepository;
 
+    @GetMapping("/search")
+    public ResponseEntity<List<OrderKanbanDTO>> searchOrders(
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String phone,
+            @RequestParam(required = false) String shortCode) {
+        
+        List<PrintOrder> orders = printOrderRepository.searchOrders(email, phone, shortCode);
+        List<OrderKanbanDTO> dtos = orders.stream().map(this::toKanbanDTO).collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
+    }
+
     @GetMapping("/kanban")
     public ResponseEntity<Map<KanbanColumn, List<OrderKanbanDTO>>> getKanbanBoard() {
         List<PrintOrder> orders = printOrderRepository.findAll();

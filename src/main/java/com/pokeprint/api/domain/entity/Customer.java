@@ -11,7 +11,9 @@ import java.util.Collection;
 import java.util.List;
 
 @Entity
-@Table(name = "customers")
+@Table(name = "customers", indexes = {
+    @Index(name = "idx_customer_email", columnList = "email")
+})
 @Getter
 @Setter
 public class Customer implements UserDetails {

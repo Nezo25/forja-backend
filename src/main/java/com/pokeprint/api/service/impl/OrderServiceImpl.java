@@ -57,7 +57,7 @@ public class OrderServiceImpl implements OrderService {
 
         PrintOrder order = new PrintOrder();
         order.setCustomer(customer);
-        order.setShortCode("ORD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+        order.setShortCode("OS-" + java.time.Year.now().getValue() + "-" + UUID.randomUUID().toString().substring(0, 4).toUpperCase());
         order.setStatus(OrderStatus.LEAD_WHATSAPP); // assuming this status exists, if not we fall back to PENDING
         order.setKanbanColumn(KanbanColumn.NEW_LEAD);
         
@@ -130,7 +130,7 @@ public class OrderServiceImpl implements OrderService {
         
         printOrderRepository.save(order);
 
-        String whatsappMsg = "Olá, Forja do Chico! Vim pelo site. Meu pedido é " + order.getShortCode() + " e o valor deu R$ " + order.getTotalAmount();
+        String whatsappMsg = "🔥 Ordem de Serviço #" + order.getShortCode() + " | Cliente: " + customer.getEmail() + "\n" + "Olá, Forja do Chico! Vim pelo site. O valor deu R$ " + order.getTotalAmount();
         String wppLink = "https://wa.me/5511999999999?text=" + URLEncoder.encode(whatsappMsg, StandardCharsets.UTF_8);
 
         return new LeadCaptureResponseDTO(
