@@ -46,7 +46,7 @@ class OrderServiceTest {
     void shouldThrowInsufficientStockException() {
         CreateOrderRequestDTO request = new CreateOrderRequestDTO(
             1L, 
-            List.of(new OrderItemRequestDTO(1L, 1L, 2, FinishType.RAW, null)),
+            List.of(new OrderItemRequestDTO(1L, null, 1L, 2, FinishType.RAW, null)),
             new ShippingAddressDTO("Rua A", "Atibaia", "SP", "12940-000"),
             null
         );
