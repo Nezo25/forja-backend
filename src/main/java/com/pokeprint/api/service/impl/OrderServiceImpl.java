@@ -4,6 +4,7 @@ import com.pokeprint.api.domain.entity.*;
 import com.pokeprint.api.domain.enums.FinishType;
 import com.pokeprint.api.domain.enums.KanbanColumn;
 import com.pokeprint.api.domain.enums.OrderStatus;
+import com.pokeprint.api.domain.TcgProduct;
 import com.pokeprint.api.dto.LeadCaptureRequestDTO;
 import com.pokeprint.api.dto.LeadCaptureResponseDTO;
 import com.pokeprint.api.dto.CouponValidationResponseDTO;
@@ -76,7 +77,7 @@ public class OrderServiceImpl implements OrderService {
             orderItem.setQuantity(itemDto.quantity());
             orderItem.setFinishType(itemDto.finishType() != null ? itemDto.finishType() : FinishType.RAW);
             
-            if (itemDto.finishType() == FinishType.PAINTED) {
+            if (itemDto.finishType() == FinishType.HAND_PAINTED) {
                 hasPainting = true;
             }
 

@@ -1,6 +1,7 @@
 package com.pokeprint.api.domain.entity;
 
 import com.pokeprint.api.domain.enums.FinishType;
+import com.pokeprint.api.domain.TcgProduct;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;

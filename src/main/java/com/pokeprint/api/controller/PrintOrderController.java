@@ -39,8 +39,6 @@ public class PrintOrderController {
         return ResponseEntity.ok(orders);
     }
 
-    @PostMapping
-    
     @PostMapping("/lead-capture")
     public ResponseEntity<LeadCaptureResponseDTO> createLeadCapture(@Valid @RequestBody LeadCaptureRequestDTO request) {
         return ResponseEntity.ok(orderService.createLeadCapture(request));
