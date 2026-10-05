@@ -62,7 +62,40 @@ public class AdminOrderController {
         return ResponseEntity.ok(toKanbanDTO(order));
     }
 
+
+    @PatchMapping("/{id}/approve")
+    public ResponseEntity<OrderKanbanDTO> approveOrder(@PathVariable Long id) {
+        PrintOrder order = printOrderRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Pedido não encontrado"));
+        order.setKanbanColumn(KanbanColumn.NEGOTIATING_APPROVED);
+        printOrderRepository.save(order);
+        return ResponseEntity.ok(toKanbanDTO(order));
+    }
+
+    @PatchMapping("/{id}/reject")
+    public ResponseEntity<OrderKanbanDTO> rejectOrder(@PathVariable Long id, @RequestBody Map<String, String> payload) {
+        PrintOrder order = printOrderRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Pedido não encontrado"));
+        order.setKanbanColumn(KanbanColumn.CANCELLED);
+        
+        String reason = payload.get("rejectionReason");
+        if (reason != null && !reason.isBlank()) {
+            String currentTags = order.getTags();
+            order.setTags(currentTags != null && !currentTags.isBlank() ? currentTags + ",MOTIVO:" + reason.replace(",", " ") : "MOTIVO:" + reason.replace(",", " "));
+        }
+        printOrderRepository.save(order);
+        return ResponseEntity.ok(toKanbanDTO(order));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteOrder(@PathVariable Long id) {
+        if (!printOrderRepository.existsById(id)) return ResponseEntity.notFound().build();
+        printOrderRepository.deleteById(id);
+        return ResponseEntity.noContent().build();
+    }
+
     private OrderKanbanDTO toKanbanDTO(PrintOrder order) {
+
         List<String> tagList = order.getTags() != null && !order.getTags().isBlank() 
                 ? Arrays.asList(order.getTags().split(",")) 
                 : List.of();

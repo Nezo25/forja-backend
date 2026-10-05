@@ -6,5 +6,6 @@ public enum KanbanColumn {
     SLICING_QUEUE,
     PRINTING,
     POST_PROCESSING,
-    READY_SHIPPED
+    READY_SHIPPED,
+    CANCELLED
 }
