@@ -12,5 +12,6 @@ public record OrderKanbanDTO(
     String customerEmail,
     BigDecimal totalAmount,
     KanbanColumn kanbanColumn,
-    List<String> tags
+    List<String> tags,
+    List<OrderItemKanbanDTO> items
 ) {}

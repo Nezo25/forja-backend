@@ -3,6 +3,7 @@ package com.pokeprint.api.controller;
 import com.pokeprint.api.domain.entity.PrintOrder;
 import com.pokeprint.api.domain.enums.KanbanColumn;
 import com.pokeprint.api.dto.response.OrderKanbanDTO;
+import com.pokeprint.api.dto.response.OrderItemKanbanDTO;
 import com.pokeprint.api.repository.PrintOrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -87,10 +88,14 @@ public class AdminOrderController {
         return ResponseEntity.ok(toKanbanDTO(order));
     }
 
+    @org.springframework.transaction.annotation.Transactional
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteOrder(@PathVariable Long id) {
-        if (!printOrderRepository.existsById(id)) return ResponseEntity.notFound().build();
-        printOrderRepository.deleteById(id);
+        PrintOrder order = printOrderRepository.findById(id).orElse(null);
+        if (order == null) return ResponseEntity.notFound().build();
+        
+        order.getItems().clear();
+        printOrderRepository.delete(order);
         return ResponseEntity.noContent().build();
     }
 
@@ -100,6 +105,15 @@ public class AdminOrderController {
                 ? Arrays.asList(order.getTags().split(",")) 
                 : List.of();
                 
+        List<OrderItemKanbanDTO> items = order.getItems().stream().map(item -> {
+            String name = "Item Customizado";
+            if (item.getPokemonModel() != null) name = item.getPokemonModel().getName();
+            else if (item.getTcgProduct() != null) name = item.getTcgProduct().getName();
+            
+            String filament = item.getFilamentInventory() != null ? item.getFilamentInventory().getColorName() : "N/A";
+            return new OrderItemKanbanDTO(name, item.getQuantity(), item.getFinishType().name(), filament);
+        }).collect(Collectors.toList());
+                
         return new OrderKanbanDTO(
                 order.getId(),
                 order.getShortCode(),
@@ -108,7 +122,8 @@ public class AdminOrderController {
                 order.getCustomer().getEmail(),
                 order.getTotalAmount(),
                 order.getKanbanColumn(),
-                tagList
+                tagList,
+                items
         );
     }
 }
