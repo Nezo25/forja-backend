@@ -43,7 +43,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/v1/admin/**", "/actuator/**").hasRole("ADMIN")
                 .requestMatchers("/api/v1/health/**").permitAll()
-                .requestMatchers("/api/v1/auth/**", "/api/v1/public/**").permitAll()
+                .requestMatchers("/api/v1/auth/**", "/api/v1/public/**", "/api/v1/orders/lead-capture").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/models/**", "/api/v1/tcg-products/**").permitAll()
                 .anyRequest().authenticated()
             );
