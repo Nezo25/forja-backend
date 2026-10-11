@@ -38,8 +38,82 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public OrderResponseDTO createOrder(CreateOrderRequestDTO request) {
-        // Dummy implementation for existing interface method
-        return null; 
+        Customer customer = customerRepository.findById(request.customerId())
+                .orElseThrow(() -> new IllegalArgumentException("Cliente não encontrado"));
+
+        PrintOrder order = new PrintOrder();
+        order.setCustomer(customer);
+        order.setShortCode("OS-" + java.time.Year.now().getValue() + "-" + UUID.randomUUID().toString().substring(0, 4).toUpperCase());
+        order.setStatus(OrderStatus.PENDING_PAYMENT);
+        order.setKanbanColumn(KanbanColumn.NEW_LEAD);
+        order.setShippingAddressLine(request.shippingAddress().addressLine());
+        order.setShippingCity(request.shippingAddress().city());
+        order.setShippingState(request.shippingAddress().state());
+        order.setShippingZipCode(request.shippingAddress().zipCode());
+
+        BigDecimal total = BigDecimal.ZERO;
+        List<String> tags = new ArrayList<>();
+        if (request.notes() != null && !request.notes().isBlank()) {
+            tags.add("OBS:" + request.notes().replace(",", " "));
+        }
+
+        for (var itemReq : request.items()) {
+            OrderItem item = new OrderItem();
+            item.setQuantity(itemReq.quantity());
+            item.setFinishType(itemReq.finishType() != null ? itemReq.finishType() : FinishType.RAW);
+            
+            BigDecimal unitPrice = BigDecimal.ZERO;
+            if (itemReq.pokemonModelId() != null) {
+                tags.add("3D");
+                PokemonModel model = pokemonModelRepository.findById(itemReq.pokemonModelId()).orElse(null);
+                item.setPokemonModel(model);
+                if (model != null && model.getBasePrice() != null) {
+                    unitPrice = model.getBasePrice();
+                }
+            } else if (itemReq.tcgProductId() != null) {
+                tags.add("TCG");
+                TcgProduct tcg = tcgProductRepository.findById(itemReq.tcgProductId()).orElse(null);
+                item.setTcgProduct(tcg);
+                if (tcg != null && tcg.getPrice() != null) {
+                    unitPrice = tcg.getPrice();
+                }
+            }
+
+            item.setUnitPrice(unitPrice);
+            item.setSubtotal(unitPrice.multiply(BigDecimal.valueOf(itemReq.quantity())));
+            total = total.add(item.getSubtotal());
+            order.addItem(item);
+        }
+
+        order.setTags(String.join(",", tags));
+        order.setTotalAmount(total);
+        PrintOrder saved = printOrderRepository.save(order);
+
+        List<com.pokeprint.api.dto.response.OrderItemResponseDTO> itemDTOs = saved.getItems().stream()
+                .map(item -> new com.pokeprint.api.dto.response.OrderItemResponseDTO(
+                        item.getId(),
+                        item.getPokemonModel() != null ? item.getPokemonModel().getId() : null,
+                        item.getPokemonModel() != null ? item.getPokemonModel().getName() : (item.getTcgProduct() != null ? item.getTcgProduct().getName() : "Item"),
+                        item.getFilamentInventory() != null ? item.getFilamentInventory().getId() : null,
+                        item.getFinishType(),
+                        item.getQuantity(),
+                        item.getUnitPrice(),
+                        item.getSubtotal()
+                )).toList();
+
+        return new OrderResponseDTO(
+                saved.getId(),
+                customer.getId(),
+                saved.getStatus(),
+                saved.getTotalAmount(),
+                saved.getTrackingCode(),
+                saved.getShippingAddressLine(),
+                saved.getShippingCity(),
+                saved.getShippingState(),
+                saved.getShippingZipCode(),
+                itemDTOs,
+                saved.getCreatedAt()
+        );
     }
 
     @Override
@@ -58,7 +132,7 @@ public class OrderServiceImpl implements OrderService {
         PrintOrder order = new PrintOrder();
         order.setCustomer(customer);
         order.setShortCode("OS-" + java.time.Year.now().getValue() + "-" + UUID.randomUUID().toString().substring(0, 4).toUpperCase());
-        order.setStatus(OrderStatus.LEAD_WHATSAPP); // assuming this status exists, if not we fall back to PENDING
+        order.setStatus(OrderStatus.LEAD_WHATSAPP);
         order.setKanbanColumn(KanbanColumn.NEW_LEAD);
         
         order.setShippingAddressLine(request.shippingAddressLine());
@@ -83,14 +157,16 @@ public class OrderServiceImpl implements OrderService {
 
             if (itemDto.pokemonModelId() != null) {
                 has3D = true;
-                PokemonModel model = pokemonModelRepository.findById(itemDto.pokemonModelId()).orElseThrow();
+                PokemonModel model = pokemonModelRepository.findById(itemDto.pokemonModelId()).orElse(null);
                 orderItem.setPokemonModel(model);
-                orderItem.setUnitPrice(model.getBasePrice()); // simplistic pricing
+                orderItem.setUnitPrice(model != null && model.getBasePrice() != null ? model.getBasePrice() : BigDecimal.ZERO);
             } else if (itemDto.tcgProductId() != null) {
                 hasTcg = true;
-                TcgProduct tcg = tcgProductRepository.findById(itemDto.tcgProductId()).orElseThrow();
+                TcgProduct tcg = tcgProductRepository.findById(itemDto.tcgProductId()).orElse(null);
                 orderItem.setTcgProduct(tcg);
-                orderItem.setUnitPrice(tcg.getPrice());
+                orderItem.setUnitPrice(tcg != null && tcg.getPrice() != null ? tcg.getPrice() : BigDecimal.ZERO);
+            } else {
+                orderItem.setUnitPrice(BigDecimal.ZERO);
             }
             
             orderItem.setSubtotal(orderItem.getUnitPrice().multiply(new BigDecimal(orderItem.getQuantity())));
@@ -101,6 +177,9 @@ public class OrderServiceImpl implements OrderService {
         if (has3D) tags.add("3D");
         if (hasTcg) tags.add("TCG");
         if (hasPainting) tags.add("PINTURA");
+        if (request.observations() != null && !request.observations().isBlank()) {
+            tags.add("OBS:" + request.observations().replace(",", " "));
+        }
 
         BigDecimal discountAmount = BigDecimal.ZERO;
         if (request.couponCode() != null && !request.couponCode().isBlank()) {

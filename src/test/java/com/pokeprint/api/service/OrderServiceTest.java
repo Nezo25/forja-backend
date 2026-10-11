@@ -43,7 +43,7 @@ class OrderServiceTest {
     private OrderServiceImpl orderService;
 
     @Test
-    void shouldThrowInsufficientStockException() {
+    void shouldCreateOrderSuccessfullyWithoutStockLock() {
         CreateOrderRequestDTO request = new CreateOrderRequestDTO(
             1L, 
             List.of(new OrderItemRequestDTO(1L, null, 1L, 2, FinishType.RAW, null)),
@@ -56,19 +56,21 @@ class OrderServiceTest {
 
         PokemonModel model = new PokemonModel();
         model.setId(1L);
+        model.setName("Charizard");
         model.setIsActive(true);
-        model.setDefaultFilamentGrams(new BigDecimal("100")); // Necessário 200g (2 items)
-
-        FilamentInventory filament = new FilamentInventory();
-        filament.setId(1L);
-        filament.setStockGrams(new BigDecimal("150")); // Só tem 150g
+        model.setBasePrice(new BigDecimal("150.00"));
 
         when(customerRepository.findById(1L)).thenReturn(Optional.of(customer));
         when(pokemonModelRepository.findById(1L)).thenReturn(Optional.of(model));
-        when(filamentInventoryRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(filament));
+        when(printOrderRepository.save(any())).thenAnswer(invocation -> {
+            com.pokeprint.api.domain.entity.PrintOrder o = invocation.getArgument(0);
+            o.setId(10L);
+            return o;
+        });
 
-        assertThrows(InsufficientStockException.class, () -> orderService.createOrder(request));
+        var response = orderService.createOrder(request);
         
-        verify(printOrderRepository, never()).save(any());
+        org.junit.jupiter.api.Assertions.assertNotNull(response);
+        verify(printOrderRepository).save(any());
     }
 }

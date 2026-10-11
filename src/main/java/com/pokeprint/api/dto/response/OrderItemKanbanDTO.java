@@ -4,5 +4,7 @@ public record OrderItemKanbanDTO(
     String itemName,
     Integer quantity,
     String finishType,
-    String filamentColor
+    String filamentColor,
+    String scale,
+    Integer printTimeMinutes
 ) {}

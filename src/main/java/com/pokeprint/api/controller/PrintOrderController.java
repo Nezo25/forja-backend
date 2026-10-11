@@ -76,9 +76,9 @@ public class PrintOrderController {
         List<OrderItemResponseDTO> itemDTOs = order.getItems().stream()
                 .map(item -> new OrderItemResponseDTO(
                         item.getId(),
-                        item.getPokemonModel().getId(),
-                        item.getPokemonModel().getName(),
-                        item.getFilamentInventory().getId(),
+                        item.getPokemonModel() != null ? item.getPokemonModel().getId() : null,
+                        item.getPokemonModel() != null ? item.getPokemonModel().getName() : (item.getTcgProduct() != null ? item.getTcgProduct().getName() : "Item Customizado"),
+                        item.getFilamentInventory() != null ? item.getFilamentInventory().getId() : null,
                         item.getFinishType(),
                         item.getQuantity(),
                         item.getUnitPrice(),

@@ -7,11 +7,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface PrintOrderRepository extends JpaRepository<PrintOrder, Long> {
     Page<PrintOrder> findByCustomerId(Long customerId, Pageable pageable);
     List<PrintOrder> findByStatus(OrderStatus status);
-        boolean existsByCustomerEmail(String email);
+    boolean existsByCustomerEmail(String email);
+    Optional<PrintOrder> findByShortCode(String shortCode);
 
     @org.springframework.data.jpa.repository.Query("SELECT p FROM PrintOrder p JOIN p.customer c WHERE " +
            "(:email IS NULL OR c.email = :email) AND " +

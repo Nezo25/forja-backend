@@ -1,6 +1,7 @@
 package com.pokeprint.api.service;
 
 import com.pokeprint.api.domain.entity.*;
+import com.pokeprint.api.domain.enums.KanbanColumn;
 import com.pokeprint.api.domain.enums.OrderStatus;
 import com.pokeprint.api.domain.enums.QuoteStatus;
 import com.pokeprint.api.dto.request.CustomQuoteAnalysisDTO;
@@ -87,13 +88,21 @@ public class CustomQuoteService {
         CustomQuoteRequest quote = quoteRepository.findById(quoteId)
                 .orElseThrow(() -> new ResourceNotFoundException("Quote not found"));
 
-        if (quote.getStatus() != QuoteStatus.APPROVED) {
+        String shortCode = "OS-2026-Q" + quoteId;
+        var existing = printOrderRepository.findByShortCode(shortCode);
+        if (existing.isPresent()) {
+            return existing.get();
+        }
+
+        if (quote.getStatus() != QuoteStatus.APPROVED && quote.getStatus() != QuoteStatus.CONVERTED_TO_ORDER) {
             throw new BusinessRuleException("Only APPROVED quotes can be converted to an order.");
         }
 
         PrintOrder order = new PrintOrder();
+        order.setShortCode(shortCode);
         order.setCustomer(quote.getCustomer());
         order.setStatus(OrderStatus.PENDING_PAYMENT);
+        order.setKanbanColumn(KanbanColumn.NEW_LEAD);
         order.setShippingAddressLine(dto.shippingAddress().addressLine());
         order.setShippingCity(dto.shippingAddress().city());
         order.setShippingState(dto.shippingAddress().state());
@@ -110,10 +119,14 @@ public class CustomQuoteService {
 
         order.addItem(item);
         
-        // Abater estoque (Lock pessimista foi usado idealmente)
-        FilamentInventory filament = filamentRepository.findByIdForUpdate(quote.getFilamentInventory().getId())
-                .orElseThrow();
-        filament.setStockGrams(filament.getStockGrams().subtract(quote.getEstimatedWeightGrams()));
+        // Se houver filamento configurado, atualiza sem travar por saldo negativo
+        if (quote.getFilamentInventory() != null && quote.getEstimatedWeightGrams() != null) {
+            filamentRepository.findByIdForUpdate(quote.getFilamentInventory().getId()).ifPresent(filament -> {
+                BigDecimal current = filament.getStockGrams() != null ? filament.getStockGrams() : BigDecimal.ZERO;
+                filament.setStockGrams(current.subtract(quote.getEstimatedWeightGrams()));
+                filamentRepository.save(filament);
+            });
+        }
 
         PrintOrder savedOrder = printOrderRepository.save(order);
 

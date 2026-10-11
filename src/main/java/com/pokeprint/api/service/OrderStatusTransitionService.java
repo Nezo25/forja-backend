@@ -43,12 +43,16 @@ public class OrderStatusTransitionService {
         
         if (newStatus == OrderStatus.CANCELLED && (currentStatus == OrderStatus.PENDING_PAYMENT || currentStatus == OrderStatus.IN_QUEUE)) {
             for (OrderItem item : order.getItems()) {
-                FilamentInventory filament = filamentInventoryRepository.findByIdForUpdate(item.getFilamentInventory().getId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Filament not found"));
-                BigDecimal defaultGrams = item.getPokemonModel() != null ? item.getPokemonModel().getDefaultFilamentGrams() : BigDecimal.ZERO; 
-                BigDecimal gramsToReturn = defaultGrams.multiply(new BigDecimal(item.getQuantity()));
-                filament.setStockGrams(filament.getStockGrams().add(gramsToReturn));
-                filamentInventoryRepository.save(filament);
+                if (item.getFilamentInventory() != null) {
+                    FilamentInventory filament = filamentInventoryRepository.findByIdForUpdate(item.getFilamentInventory().getId())
+                        .orElse(null);
+                    if (filament != null) {
+                        BigDecimal defaultGrams = item.getPokemonModel() != null ? item.getPokemonModel().getDefaultFilamentGrams() : BigDecimal.ZERO; 
+                        BigDecimal gramsToReturn = defaultGrams.multiply(new BigDecimal(item.getQuantity()));
+                        filament.setStockGrams(filament.getStockGrams().add(gramsToReturn));
+                        filamentInventoryRepository.save(filament);
+                    }
+                }
             }
         }
         

@@ -37,19 +37,24 @@ public class AdminQuoteController {
     @PostMapping("/{id}/convert-to-kanban")
     public ResponseEntity<PrintOrder> convertToKanban(@PathVariable Long id) {
         CustomQuoteRequest quote = quoteRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Quote n\u00e3o encontrado"));
+                .orElseThrow(() -> new IllegalArgumentException("Quote não encontrado"));
         
+        String shortCode = "OS-2026-Q" + id;
+        var existingOrder = printOrderRepository.findByShortCode(shortCode);
+        if (existingOrder.isPresent()) {
+            return ResponseEntity.ok(existingOrder.get());
+        }
+
         quote.setStatus(QuoteStatus.CONVERTED_TO_ORDER);
         quoteRepository.save(quote);
 
         PrintOrder order = new PrintOrder();
-        order.setShortCode("OS-2026-Q" + id);
-        order.setCustomer(quote.getCustomer()); // Assuming quote has getCustomer()
+        order.setShortCode(shortCode);
+        order.setCustomer(quote.getCustomer());
         order.setKanbanColumn(KanbanColumn.NEW_LEAD);
         order.setTags("[STL_CUSTOM]");
-        // Other fields like totalAmount would normally come from Quote approval analysis
-        order.setTotalAmount(java.math.BigDecimal.ZERO);
-        order.setShippingAddressLine("Endere\u00e7o a combinar");
+        order.setTotalAmount(quote.getFinalPrice() != null ? quote.getFinalPrice() : java.math.BigDecimal.ZERO);
+        order.setShippingAddressLine("Endereço a combinar");
         order.setShippingCity("-");
         order.setShippingState("-");
         order.setShippingZipCode("-");
