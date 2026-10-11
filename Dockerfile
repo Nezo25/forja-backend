@@ -4,13 +4,13 @@
 FROM maven:3.9.6-eclipse-temurin-21-alpine AS builder
 WORKDIR /app
 
-# Otimização de cache do Maven (baixa dependências primeiro)
+# Cache de dependências do Maven
 COPY pom.xml .
-RUN mvn dependency:go-offline
+RUN mvn dependency:go-offline -DskipTests -Ddependency-check.skip=true || true
 
-# Copia o código fonte e compila o .jar (pulando testes no build para ser mais rápido na nuvem)
+# Copia o código fonte e compila o .jar (pulando testes e NVD no build para deploy rápido)
 COPY src ./src
-RUN mvn clean package -DskipTests
+RUN mvn clean package -DskipTests -Ddependency-check.skip=true
 
 # ==========================================
 # Runtime Stage (Execução leve)
