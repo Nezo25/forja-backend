@@ -11,8 +11,10 @@ import java.util.Optional;
 
 public interface PrintOrderRepository extends JpaRepository<PrintOrder, Long> {
     Page<PrintOrder> findByCustomerId(Long customerId, Pageable pageable);
-    List<PrintOrder> findByStatus(OrderStatus status);
-    boolean existsByCustomerEmail(String email);
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(p) > 0 FROM PrintOrder p WHERE p.customer.email = :email")
+    boolean existsByCustomerEmail(@org.springframework.data.repository.query.Param("email") String email);
+
+    boolean existsByCustomerId(Long customerId);
     Optional<PrintOrder> findByShortCode(String shortCode);
 
     @org.springframework.data.jpa.repository.Query("SELECT p FROM PrintOrder p JOIN p.customer c WHERE " +

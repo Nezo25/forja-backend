@@ -1,5 +1,6 @@
 package com.pokeprint.api.dto.request;
 
+import com.pokeprint.api.domain.enums.ProductCategory;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -9,6 +10,7 @@ import java.math.BigDecimal;
 public record PokemonModelRequestDTO(
     Integer pokedexNumber,
     @NotBlank String name,
+    ProductCategory category,
     @NotNull @Min(1) Integer generation,
     @NotBlank String primaryType,
     String secondaryType,

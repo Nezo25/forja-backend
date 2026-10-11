@@ -3,6 +3,7 @@ package com.pokeprint.api.domain.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import com.pokeprint.api.domain.enums.ProductCategory;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -21,6 +22,10 @@ public class PokemonModel {
 
     @Column(nullable = false, length = 100)
     private String name;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "category", nullable = false, length = 50)
+    private ProductCategory category = ProductCategory.FIGURE_POKEMON;
 
     private Integer generation;
 

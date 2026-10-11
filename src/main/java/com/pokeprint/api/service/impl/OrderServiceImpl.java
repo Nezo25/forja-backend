@@ -199,7 +199,14 @@ public class OrderServiceImpl implements OrderService {
             }
         } else {
             // Check if first purchase anyway
-            if (!printOrderRepository.existsByCustomerEmail(customer.getEmail())) {
+            try {
+                boolean hasPreviousOrders = customer.getId() != null 
+                    ? printOrderRepository.existsByCustomerId(customer.getId())
+                    : printOrderRepository.existsByCustomerEmail(customer.getEmail());
+                if (!hasPreviousOrders) {
+                    tags.add("NOVO_CLIENTE");
+                }
+            } catch (Exception ex) {
                 tags.add("NOVO_CLIENTE");
             }
         }

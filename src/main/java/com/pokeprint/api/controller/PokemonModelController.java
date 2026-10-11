@@ -1,6 +1,7 @@
 package com.pokeprint.api.controller;
 
 import com.pokeprint.api.domain.entity.PokemonModel;
+import com.pokeprint.api.domain.enums.ProductCategory;
 import com.pokeprint.api.dto.request.PokemonModelRequestDTO;
 import com.pokeprint.api.dto.response.PokemonModelResponseDTO;
 import com.pokeprint.api.repository.PokemonModelRepository;
@@ -25,10 +26,11 @@ public class PokemonModelController {
     public ResponseEntity<Page<PokemonModelResponseDTO>> getModels(
             @RequestParam(required = false) Integer generation,
             @RequestParam(required = false) String type,
+            @RequestParam(required = false) ProductCategory category,
             @RequestParam(required = false) String scale,
             Pageable pageable) {
         
-        Page<PokemonModel> page = pokemonModelRepository.findActiveWithFilters(generation, type, pageable);
+        Page<PokemonModel> page = pokemonModelRepository.findActiveWithFilters(generation, type, category, pageable);
         return ResponseEntity.ok(page.map(this::toResponseDTO));
     }
 
@@ -45,6 +47,7 @@ public class PokemonModelController {
         PokemonModel model = new PokemonModel();
         model.setPokedexNumber(request.pokedexNumber());
         model.setName(request.name());
+        model.setCategory(request.category() != null ? request.category() : ProductCategory.FIGURE_POKEMON);
         model.setGeneration(request.generation());
         model.setPrimaryType(request.primaryType());
         model.setSecondaryType(request.secondaryType());
@@ -70,6 +73,9 @@ public class PokemonModelController {
         return pokemonModelRepository.findById(id).map(model -> {
             model.setPokedexNumber(request.pokedexNumber());
             model.setName(request.name());
+            if (request.category() != null) {
+                model.setCategory(request.category());
+            }
             model.setGeneration(request.generation());
             model.setPrimaryType(request.primaryType());
             model.setSecondaryType(request.secondaryType());
@@ -95,6 +101,7 @@ public class PokemonModelController {
                 model.getId(),
                 model.getPokedexNumber(),
                 model.getName(),
+                model.getCategory() != null ? model.getCategory() : ProductCategory.FIGURE_POKEMON,
                 model.getGeneration(),
                 model.getPrimaryType(),
                 model.getSecondaryType(),
