@@ -34,6 +34,7 @@ public class OrderServiceImpl implements OrderService {
     private final CouponService couponService;
     private final PokemonModelRepository pokemonModelRepository;
     private final TcgProductRepository tcgProductRepository;
+    private final com.pokeprint.api.service.ShowcaseService showcaseService;
 
     @Override
     @Transactional
@@ -67,7 +68,10 @@ public class OrderServiceImpl implements OrderService {
                 tags.add("3D");
                 PokemonModel model = pokemonModelRepository.findById(itemReq.pokemonModelId()).orElse(null);
                 item.setPokemonModel(model);
-                if (model != null && model.getBasePrice() != null) {
+                if ("HERO_SHOWCASE".equalsIgnoreCase(itemReq.origin()) && itemReq.promoPrice() != null && itemReq.promoPrice().compareTo(BigDecimal.ZERO) > 0) {
+                    unitPrice = itemReq.promoPrice();
+                    tags.add("HERO_SHOWCASE");
+                } else if (model != null && model.getBasePrice() != null) {
                     unitPrice = model.getBasePrice();
                 }
             } else if (itemReq.tcgProductId() != null) {
@@ -159,7 +163,12 @@ public class OrderServiceImpl implements OrderService {
                 has3D = true;
                 PokemonModel model = pokemonModelRepository.findById(itemDto.pokemonModelId()).orElse(null);
                 orderItem.setPokemonModel(model);
-                orderItem.setUnitPrice(model != null && model.getBasePrice() != null ? model.getBasePrice() : BigDecimal.ZERO);
+                if ("HERO_SHOWCASE".equalsIgnoreCase(itemDto.origin()) && itemDto.promoPrice() != null && itemDto.promoPrice().compareTo(BigDecimal.ZERO) > 0) {
+                    orderItem.setUnitPrice(itemDto.promoPrice());
+                    tags.add("HERO_SHOWCASE");
+                } else {
+                    orderItem.setUnitPrice(model != null && model.getBasePrice() != null ? model.getBasePrice() : BigDecimal.ZERO);
+                }
             } else if (itemDto.tcgProductId() != null) {
                 hasTcg = true;
                 TcgProduct tcg = tcgProductRepository.findById(itemDto.tcgProductId()).orElse(null);
@@ -183,6 +192,17 @@ public class OrderServiceImpl implements OrderService {
 
         BigDecimal discountAmount = BigDecimal.ZERO;
         if (request.couponCode() != null && !request.couponCode().isBlank()) {
+            // Anti-stacking validation for HERO_SHOWCASE promotional items
+            for (var itemDto : request.items()) {
+                if ("HERO_SHOWCASE".equalsIgnoreCase(itemDto.origin()) && itemDto.pokemonModelId() != null) {
+                    if (!showcaseService.isCouponAllowedForProduct(itemDto.pokemonModelId())) {
+                        PokemonModel model = pokemonModelRepository.findById(itemDto.pokemonModelId()).orElse(null);
+                        String itemName = (model != null && model.getName() != null) ? model.getName() : "selecionado";
+                        throw new IllegalArgumentException("O item " + itemName + " já possui desconto promocional de bancada e não acumula com este cupom.");
+                    }
+                }
+            }
+
             CouponValidationResponseDTO couponResp = couponService.validateAndApplyCoupon(request.couponCode(), subtotal, customer.getEmail());
             if (couponResp.discountAmount().compareTo(BigDecimal.ZERO) > 0) {
                 Coupon coupon = couponRepository.findByCode(request.couponCode().toUpperCase()).orElse(null);

@@ -10,5 +10,8 @@ public record OrderItemRequestDTO(
     Long filamentInventoryId,
     @NotNull @Min(1) Integer quantity,
     FinishType finishType,
-    String customScale
+    String customScale,
+    String origin,
+    java.math.BigDecimal promoPrice,
+    String promoBadge
 ) {}
