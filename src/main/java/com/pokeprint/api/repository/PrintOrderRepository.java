@@ -26,4 +26,19 @@ public interface PrintOrderRepository extends JpaRepository<PrintOrder, Long> {
                                   @org.springframework.data.repository.query.Param("phone") String phone,
                                   @org.springframework.data.repository.query.Param("shortCode") String shortCode);
 
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(p.totalAmount), 0) FROM PrintOrder p WHERE p.status IN ('CONFIRMED', 'PAID', 'IN_QUEUE', 'PRINTING', 'PAINTING_POST_PROCESSING', 'SHIPPED', 'DELIVERED', 'COMPLETED')")
+    java.math.BigDecimal calculateTotalRevenue();
+
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(p) FROM PrintOrder p WHERE p.status IN ('CONFIRMED', 'PAID', 'IN_QUEUE', 'PRINTING', 'PAINTING_POST_PROCESSING', 'SHIPPED', 'DELIVERED', 'COMPLETED')")
+    long countCompletedOrders();
+
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(p.totalAmount), 0) FROM PrintOrder p WHERE p.status IN ('LEAD_WHATSAPP', 'PENDING_PAYMENT')")
+    java.math.BigDecimal calculatePipelineRevenue();
+
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(p) FROM PrintOrder p WHERE p.status IN ('LEAD_WHATSAPP', 'PENDING_PAYMENT')")
+    long countActiveLeads();
+
+    @org.springframework.data.jpa.repository.Query("SELECT p FROM PrintOrder p WHERE p.status IN ('CONFIRMED', 'PAID', 'IN_QUEUE', 'PRINTING', 'PAINTING_POST_PROCESSING', 'SHIPPED', 'DELIVERED', 'COMPLETED') ORDER BY p.createdAt ASC")
+    List<PrintOrder> findAllConfirmedOrders();
+
 }
