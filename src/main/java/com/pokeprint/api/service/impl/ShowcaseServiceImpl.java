@@ -67,9 +67,17 @@ public class ShowcaseServiceImpl implements ShowcaseService {
 
             if (product != null) {
                 BigDecimal origPrice = product.getBasePrice() != null ? product.getBasePrice() : BigDecimal.valueOf(65.00);
+                BigDecimal defaultDiscount = origPrice.compareTo(BigDecimal.valueOf(80.00)) >= 0
+                        ? BigDecimal.valueOf(16.00)
+                        : (origPrice.compareTo(BigDecimal.valueOf(50.00)) >= 0 ? BigDecimal.valueOf(10.00) : BigDecimal.valueOf(8.00));
+
                 BigDecimal finalPromo = (promoPrice != null && promoPrice.compareTo(BigDecimal.ZERO) > 0 && promoPrice.compareTo(origPrice) < 0)
                         ? promoPrice
-                        : origPrice;
+                        : origPrice.subtract(defaultDiscount);
+
+                String finalBadge = (badge != null && !badge.isBlank() && !badge.equals("⚡ OFERTA DE BANCADA") && !badge.equals("⭐ PEÇA DA SEMANA"))
+                        ? badge
+                        : "🔥 OFERTA DESTAQUE DA OFICINA";
 
                 BigDecimal discountAmount = origPrice.subtract(finalPromo);
                 int discountPercent = 0;
@@ -91,7 +99,7 @@ public class ShowcaseServiceImpl implements ShowcaseService {
                         finalPromo,
                         discountAmount,
                         discountPercent,
-                        badge,
+                        finalBadge,
                         allowStacking
                 ));
             }
