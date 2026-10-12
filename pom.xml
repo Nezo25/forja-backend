@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.3.4</version>
+        <version>3.3.5</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     
@@ -14,7 +14,7 @@
     <artifactId>pokeprint-api</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>PokePrint 3D API</name>
-    <description>REST API para e-commerce e gestÃ£o de impressÃµes 3D temÃ¡ticas de PokÃ©mon</description>
+    <description>REST API para e-commerce e gestão de impressões 3D temáticas de Pokémon</description>
 
     <properties>
         <java.version>21</java.version>
@@ -112,7 +112,7 @@
         <dependency>
             <groupId>net.logstash.logback</groupId>
             <artifactId>logstash-logback-encoder</artifactId>
-            <version>7.4</version>
+            <version>8.0</version>
         </dependency>
 
     </dependencies>
