@@ -1,0 +1,10 @@
+# Caddyfile para Forja do Chico na Hostinger VPS
+srv2072247.hstgr.cloud {
+    # Proxy reverso automático para o Spring Boot com SSL (HTTPS) gerado automaticamente
+    reverse_proxy backend:8080 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
+}

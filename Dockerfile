@@ -31,5 +31,5 @@ USER appuser
 # Expõe a porta que o Render vai escutar
 EXPOSE 8080
 
-# Inicia o servidor forçando o profile 'prod' com controle de memória para container de 512MB
-ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75.0", "-Xmx384m", "-Dspring.profiles.active=prod", "-jar", "app.jar"]
+# Inicia o servidor forçando o profile 'prod' com controle de memória otimizado
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75.0", "-Xmx1024m", "-Dspring.profiles.active=prod", "-jar", "app.jar"]
